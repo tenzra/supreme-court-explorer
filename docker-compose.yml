@@ -21,8 +21,10 @@ services:
     container_name: supreme_court_backend
     ports:
       - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/supreme_court
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/supreme_court
       OLLAMA_BASE_URL: http://host.docker.internal:11434
       CORS_ORIGINS: "http://localhost:3000,http://localhost:8081"
     depends_on:

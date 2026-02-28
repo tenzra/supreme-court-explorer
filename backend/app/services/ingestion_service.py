@@ -15,13 +15,13 @@ Output ONLY valid JSON. No markdown, no code blocks, no extra text."""
 SUMMARY_PROMPT = """Summarize this Indian Supreme Court case into the following JSON structure.
 Output ONLY the JSON object, nothing else.
 
-{
+{{
   "facts": "Brief factual background (2-4 sentences)",
   "legal_issues": "Key legal questions raised (2-4 sentences)",
   "judgment": "Court's decision and outcome (2-4 sentences)",
   "ratio_decidendi": "The legal principle/ratio of the decision (2-4 sentences)",
   "key_principles": ["Principle 1", "Principle 2", "Principle 3"]
-}
+}}
 
 Case name: {case_name}
 Citation: {citation}
