@@ -18,9 +18,10 @@ env/
 .env.local
 .env.*.local
 
-# IDE
+# IDE / Editor
 .vscode/
 .idea/
+.cursor/
 *.swp
 *.swo
 *~
