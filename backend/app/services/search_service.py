@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Case, CaseTopic
@@ -14,10 +14,6 @@ async def search_cases(
     limit: int = 20,
     offset: int = 0,
 ) -> list[tuple[Case, float | None]]:
-    """
-    Semantic search with optional filters.
-    Returns list of (Case, similarity_score). Score is None when not using semantic search.
-    """
     if q and q.strip():
         embedding = await ollama_client.embed(q.strip())
         sim_expr = (1 - Case.embedding.cosine_distance(embedding)).label("sim")
@@ -30,13 +26,19 @@ async def search_cases(
         stmt = select(Case).order_by(Case.year.desc())
 
     if topic_ids:
-        stmt = stmt.join(CaseTopic).where(CaseTopic.topic_id.in_(topic_ids))
+        stmt = stmt.where(
+            exists(
+                select(CaseTopic.id)
+                .where(CaseTopic.case_id == Case.id)
+                .where(CaseTopic.topic_id.in_(topic_ids))
+            )
+        )
     if year_from is not None:
         stmt = stmt.where(Case.year >= year_from)
     if year_to is not None:
         stmt = stmt.where(Case.year <= year_to)
 
-    stmt = stmt.distinct().limit(limit).offset(offset)
+    stmt = stmt.limit(limit).offset(offset)
     result = await session.execute(stmt)
     rows = result.all()
 
@@ -48,7 +50,6 @@ async def search_cases(
 async def get_similar_cases(
     session: AsyncSession, case_id: int, limit: int = 5
 ) -> list[tuple[Case, float]]:
-    """Get cases similar to the given case by embedding."""
     r = await session.execute(
         select(Case).where(Case.id == case_id).where(Case.embedding.isnot(None))
     )
