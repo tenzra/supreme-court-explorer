@@ -5,6 +5,36 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { getCase, getSimilarCases, type CaseDetail, type SearchResult } from "@/lib/api";
 
+function DetailSkeleton() {
+  return (
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <div className="skeleton h-4 w-28 mb-6" />
+      <div className="skeleton h-7 w-3/4 mb-3" />
+      <div className="skeleton h-4 w-1/2 mb-8" />
+      <div className="skeleton h-10 w-full rounded-lg mb-8" />
+      {[...Array(3)].map((_, i) => (
+        <div key={i} className="mb-6">
+          <div className="skeleton h-5 w-32 mb-3" />
+          <div className="skeleton h-4 w-full mb-2" />
+          <div className="skeleton h-4 w-full mb-2" />
+          <div className="skeleton h-4 w-2/3" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SectionBlock({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-6">
+      <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-2">
+        {title}
+      </h3>
+      <div className="text-[15px] leading-relaxed text-text">{children}</div>
+    </div>
+  );
+}
+
 export default function CaseDetailPage() {
   const params = useParams();
   const id = Number(params.id);
@@ -28,115 +58,154 @@ export default function CaseDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div style={{ padding: 24 }}>Loading...</div>;
-  if (error || !caseData)
+  if (loading) return <DetailSkeleton />;
+
+  if (error || !caseData) {
     return (
-      <div style={{ padding: 24 }}>
-        <p>{error || "Case not found"}</p>
-        <Link href="/" style={{ marginTop: 16, display: "inline-block" }}>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-center">
+        <svg className="mx-auto mb-4 text-text-muted" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="m15 9-6 6" />
+          <path d="m9 9 6 6" />
+        </svg>
+        <p className="text-text-secondary mb-4">{error || "Case not found"}</p>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
           Back to search
         </Link>
       </div>
     );
+  }
 
   return (
-    <main style={{ maxWidth: 720, margin: "0 auto", padding: 24 }}>
-      <Link href="/" style={{ marginBottom: 16, display: "inline-block" }}>
-        ← Back to search
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      {/* Back link */}
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-text-secondary transition mb-6"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+        Back to search
       </Link>
 
-      <header style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>{caseData.case_name}</h1>
-        <p style={{ color: "#666", fontSize: 14 }}>
-          {caseData.citation} · {caseData.year}
-          {caseData.bench && ` · ${caseData.bench}`}
-        </p>
+      {/* Header */}
+      <header className="mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-text leading-snug mb-2">
+          {caseData.case_name}
+        </h1>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-muted">
+          <span>{caseData.citation}</span>
+          <span>&middot;</span>
+          <span>{caseData.year}</span>
+          {caseData.bench && (
+            <>
+              <span>&middot;</span>
+              <span>{caseData.bench}</span>
+            </>
+          )}
+        </div>
       </header>
 
-      <div
-        style={{
-          padding: 12,
-          marginBottom: 24,
-          background: "#fef3c7",
-          borderRadius: 8,
-          fontSize: 14,
-        }}
-      >
-        AI-generated summary. Verify with official judgment.
+      {/* AI Disclaimer */}
+      <div className="flex items-start gap-2.5 px-4 py-3 mb-8 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-700">
+        <svg className="mt-0.5 shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 9v4" />
+          <path d="M12 17h.01" />
+          <circle cx="12" cy="12" r="10" />
+        </svg>
+        <span>AI-generated summary. Always verify against the official judgment.</span>
       </div>
 
-      <section style={{ marginBottom: 24 }}>
+      {/* Case Content */}
+      <div className="bg-surface rounded-xl border border-border p-5 sm:p-6 mb-8">
         {caseData.facts && (
-          <div style={{ marginBottom: 20 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Facts</h3>
-            <p style={{ lineHeight: 1.6 }}>{caseData.facts}</p>
-          </div>
+          <SectionBlock title="Facts">
+            <p>{caseData.facts}</p>
+          </SectionBlock>
         )}
         {caseData.legal_issues && (
-          <div style={{ marginBottom: 20 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Legal Issues</h3>
-            <p style={{ lineHeight: 1.6 }}>{caseData.legal_issues}</p>
-          </div>
+          <SectionBlock title="Legal Issues">
+            <p>{caseData.legal_issues}</p>
+          </SectionBlock>
         )}
         {caseData.judgment && (
-          <div style={{ marginBottom: 20 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Judgment</h3>
-            <p style={{ lineHeight: 1.6 }}>{caseData.judgment}</p>
-          </div>
+          <SectionBlock title="Judgment">
+            <p>{caseData.judgment}</p>
+          </SectionBlock>
         )}
         {caseData.ratio_decidendi && (
-          <div style={{ marginBottom: 20 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Ratio Decidendi</h3>
-            <p style={{ lineHeight: 1.6 }}>{caseData.ratio_decidendi}</p>
-          </div>
+          <SectionBlock title="Ratio Decidendi">
+            <p>{caseData.ratio_decidendi}</p>
+          </SectionBlock>
         )}
         {caseData.key_principles && caseData.key_principles.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Key Principles</h3>
-            <ul style={{ paddingLeft: 20, lineHeight: 1.6 }}>
+          <SectionBlock title="Key Principles">
+            <ul className="list-disc pl-5 space-y-1.5">
               {caseData.key_principles.map((p, i) => (
                 <li key={i}>{p}</li>
               ))}
             </ul>
-          </div>
+          </SectionBlock>
         )}
-      </section>
+      </div>
 
+      {/* Source */}
       {caseData.source_url && (
-        <p style={{ marginBottom: 24, fontSize: 14 }}>
-          <a href={caseData.source_url} target="_blank" rel="noopener noreferrer">
-            View source
+        <div className="mb-8">
+          <a
+            href={caseData.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 transition"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            View official judgment
           </a>
-        </p>
+        </div>
       )}
 
+      {/* Similar Cases */}
       {similar.length > 0 && (
         <section>
-          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Similar Cases</h2>
-          <ul style={{ listStyle: "none" }}>
+          <h2 className="text-base font-semibold text-text mb-4">Similar Cases</h2>
+          <ul className="space-y-2">
             {similar.map((r) => (
-              <li
-                key={r.case.id}
-                style={{
-                  padding: 12,
-                  marginBottom: 8,
-                  background: "white",
-                  borderRadius: 8,
-                  border: "1px solid #e5e7eb",
-                }}
-              >
-                <Link href={`/cases/${r.case.id}`} style={{ fontWeight: 500 }}>
-                  {r.case.case_name}
+              <li key={r.case.id}>
+                <Link
+                  href={`/cases/${r.case.id}`}
+                  className="flex items-center justify-between gap-3 px-4 py-3 bg-surface rounded-lg border border-border
+                             hover:border-primary-300 hover:shadow-sm transition group"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-text group-hover:text-primary-700 transition-colors truncate">
+                      {r.case.case_name}
+                    </p>
+                    <p className="text-xs text-text-muted mt-0.5">
+                      {r.case.citation} &middot; {r.case.year}
+                    </p>
+                  </div>
+                  {r.similarity != null && (
+                    <span className="shrink-0 text-xs text-text-muted">
+                      {Math.round(r.similarity * 100)}%
+                    </span>
+                  )}
                 </Link>
-                <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>
-                  {r.case.citation} · {r.case.year}
-                  {r.similarity != null && ` · ${Math.round(r.similarity * 100)}% similar`}
-                </div>
               </li>
             ))}
           </ul>
         </section>
       )}
-    </main>
+    </div>
   );
 }
