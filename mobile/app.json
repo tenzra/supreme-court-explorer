@@ -1,0 +1,9 @@
+{
+  "expo": {
+    "name": "Supreme Court Explorer",
+    "slug": "supreme-court-explorer",
+    "version": "0.1.0",
+    "scheme": "supreme-court-explorer",
+    "web": { "bundler": "metro" }
+  }
+}
