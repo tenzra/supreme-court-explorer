@@ -16,5 +16,30 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build: ./backend
+    container_name: supreme_court_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/supreme_court
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build: ./web
+    container_name: supreme_court_web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api
+    depends_on:
+      - backend
+    restart: unless-stopped
+
 volumes:
   pgdata:
