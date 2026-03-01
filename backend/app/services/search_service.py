@@ -42,9 +42,9 @@ async def search_cases(
     result = await session.execute(stmt)
     rows = result.all()
 
-    if rows and len(rows[0]) == 2:
+    if rows and hasattr(rows[0], '__len__') and len(rows[0]) == 2:
         return [(r[0], float(r[1]) if r[1] is not None else None) for r in rows]
-    return [(r[0] if isinstance(r, tuple) else r, None) for r in rows]
+    return [(r[0], None) for r in rows]
 
 
 async def get_similar_cases(

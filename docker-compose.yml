@@ -17,7 +17,9 @@ services:
       retries: 5
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: supreme_court_backend
     ports:
       - "8000:8000"
@@ -33,7 +35,9 @@ services:
     restart: unless-stopped
 
   web:
-    build: ./web
+    build:
+      context: .
+      dockerfile: web/Dockerfile
     container_name: supreme_court_web
     ports:
       - "3000:3000"

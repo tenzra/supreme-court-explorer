@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-ingest"
+  labels:
+    {{- include "sc.labels" . | nindent 4 }}
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        {{- include "sc.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: ingest
+          image: "{{ .Values.backend.image }}:{{ .Values.backend.tag }}"
+          imagePullPolicy: Never
+          command: ["python", "scripts/ingest_cases.py", "data/sample_cases.json"]
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://{{ .Values.db.user }}:{{ .Values.db.password }}@db:5432/{{ .Values.db.name }}"
+            - name: OLLAMA_BASE_URL
+              value: "http://ollama:11434"

@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    {{- include "sc.labels" . | nindent 4 }}
+    {{- include "sc.selectorLabels" (dict "component" "backend") | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      {{- include "sc.selectorLabels" (dict "component" "backend") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "sc.labels" . | nindent 8 }}
+        {{- include "sc.selectorLabels" (dict "component" "backend") | nindent 8 }}
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image }}:{{ .Values.backend.tag }}"
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://{{ .Values.db.user }}:{{ .Values.db.password }}@db:5432/{{ .Values.db.name }}"
+            - name: OLLAMA_BASE_URL
+              value: "http://ollama:11434"
+            - name: CORS_ORIGINS
+              value: {{ .Values.backend.corsOrigins | quote }}
+            - name: API_KEY
+              value: {{ .Values.backend.apiKey | quote }}
+            - name: RATE_LIMIT_DEFAULT
+              value: {{ .Values.backend.rateLimitDefault | quote }}
+            - name: RATE_LIMIT_SEARCH
+              value: {{ .Values.backend.rateLimitSearch | quote }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30

@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     ollama_llm_model: str = "llama3"
     embedding_dimension: int = 768
     cors_origins: str = "http://localhost:3000,http://localhost:8081"
+    api_key: str = ""
+    rate_limit_default: str = "60/minute"
+    rate_limit_search: str = "20/minute"
 
     class Config:
         env_file = ".env"

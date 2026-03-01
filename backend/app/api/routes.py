@@ -1,13 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
+from app.config import settings
 from app.db.session import get_db
 from app.models import Case, Topic
 from app.schemas import CaseResponse, CaseDetailResponse, CaseSearchResult, TopicResponse
 from app.services.search_service import search_cases, get_similar_cases
+from app.middleware.auth import require_api_key
 
-router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
+
+router = APIRouter(dependencies=[Depends(require_api_key)])
 
 
 def _snippet(case: Case, max_len: int = 150) -> str | None:
@@ -18,7 +24,9 @@ def _snippet(case: Case, max_len: int = 150) -> str | None:
 
 
 @router.get("/search", response_model=list[CaseSearchResult])
+@limiter.limit(settings.rate_limit_search)
 async def search(
+    request: Request,
     q: str | None = Query(None, description="Search query for semantic search"),
     topic_ids: str | None = Query(None, description="Comma-separated topic IDs"),
     year_from: int | None = Query(None),
@@ -51,7 +59,9 @@ async def search(
 
 
 @router.get("/cases", response_model=list[CaseResponse])
+@limiter.limit(settings.rate_limit_default)
 async def list_cases(
+    request: Request,
     topic_ids: str | None = Query(None),
     year_from: int | None = Query(None),
     year_to: int | None = Query(None),
@@ -78,7 +88,8 @@ async def list_cases(
 
 
 @router.get("/cases/{case_id}", response_model=CaseDetailResponse)
-async def get_case(case_id: int, db: AsyncSession = Depends(get_db)):
+@limiter.limit(settings.rate_limit_default)
+async def get_case(request: Request, case_id: int, db: AsyncSession = Depends(get_db)):
     r = await db.execute(select(Case).where(Case.id == case_id))
     case = r.scalar_one_or_none()
     if not case:
@@ -99,7 +110,9 @@ async def get_case(case_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/cases/{case_id}/similar", response_model=list[CaseSearchResult])
+@limiter.limit(settings.rate_limit_search)
 async def similar_cases(
+    request: Request,
     case_id: int,
     limit: int = Query(5, ge=1, le=20),
     db: AsyncSession = Depends(get_db),
@@ -123,6 +136,7 @@ async def similar_cases(
 
 
 @router.get("/topics", response_model=list[TopicResponse])
-async def list_topics(db: AsyncSession = Depends(get_db)):
+@limiter.limit(settings.rate_limit_default)
+async def list_topics(request: Request, db: AsyncSession = Depends(get_db)):
     r = await db.execute(select(Topic).order_by(Topic.name))
     return [TopicResponse.model_validate(t) for t in r.scalars().all()]

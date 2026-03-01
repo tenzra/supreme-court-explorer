@@ -1,43 +1,11 @@
 import { Platform } from "react-native";
+import type { CaseSummary, CaseDetail, Topic, SearchResult } from "@shared/types";
+
+export type { CaseSummary, CaseDetail, Topic, SearchResult };
 
 const API_BASE =
   process.env.EXPO_PUBLIC_API_URL ||
   (Platform.OS === "android" ? "http://10.0.2.2:8000/api" : "http://localhost:8000/api");
-
-export interface CaseSummary {
-  id: number;
-  case_name: string;
-  citation: string;
-  year: number;
-  bench: string | null;
-  snippet: string | null;
-  similarity?: number | null;
-}
-
-export interface CaseDetail {
-  id: number;
-  case_name: string;
-  citation: string;
-  year: number;
-  bench: string | null;
-  facts: string | null;
-  legal_issues: string | null;
-  judgment: string | null;
-  ratio_decidendi: string | null;
-  key_principles: string[];
-  source_url: string | null;
-}
-
-export interface Topic {
-  id: number;
-  name: string;
-  slug: string;
-}
-
-export interface SearchResult {
-  case: CaseSummary;
-  similarity: number | null;
-}
 
 export async function searchCases(params: {
   q?: string;

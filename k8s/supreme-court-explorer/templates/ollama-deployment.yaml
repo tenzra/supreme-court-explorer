@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  labels:
+    {{- include "sc.labels" . | nindent 4 }}
+    {{- include "sc.selectorLabels" (dict "component" "ollama") | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "sc.selectorLabels" (dict "component" "ollama") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "sc.labels" . | nindent 8 }}
+        {{- include "sc.selectorLabels" (dict "component" "ollama") | nindent 8 }}
+    spec:
+      initContainers:
+        - name: pull-models
+          image: {{ .Values.ollama.image }}
+          command:
+            - sh
+            - -c
+            - |
+              {{- range .Values.ollama.models }}
+              echo "Pulling model {{ . }}..."
+              ollama serve &
+              PID=$!
+              sleep 5
+              ollama pull {{ . }}
+              kill $PID
+              wait $PID 2>/dev/null
+              sleep 2
+              {{- end }}
+              echo "All models pulled."
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+          resources:
+            requests:
+              {{- toYaml .Values.ollama.resources.requests | nindent 14 }}
+            limits:
+              {{- toYaml .Values.ollama.resources.limits | nindent 14 }}
+              {{- if .Values.ollama.gpu.enabled }}
+              nvidia.com/gpu: {{ .Values.ollama.gpu.count | quote }}
+              {{- end }}
+          {{- if .Values.ollama.gpu.enabled }}
+          env:
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: "all"
+          {{- end }}
+      containers:
+        - name: ollama
+          image: {{ .Values.ollama.image }}
+          ports:
+            - containerPort: 11434
+          {{- if .Values.ollama.gpu.enabled }}
+          env:
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: "all"
+          {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 11434
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 11434
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+          resources:
+            requests:
+              {{- toYaml .Values.ollama.resources.requests | nindent 14 }}
+            limits:
+              {{- toYaml .Values.ollama.resources.limits | nindent 14 }}
+              {{- if .Values.ollama.gpu.enabled }}
+              nvidia.com/gpu: {{ .Values.ollama.gpu.count | quote }}
+              {{- end }}
+      volumes:
+        - name: ollama-data
+          persistentVolumeClaim:
+            claimName: ollama-models

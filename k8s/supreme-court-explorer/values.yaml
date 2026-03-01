@@ -1,0 +1,42 @@
+db:
+  image: pgvector/pgvector:pg16
+  user: postgres
+  password: postgres
+  name: supreme_court
+  storage: 1Gi
+
+ollama:
+  image: ollama/ollama:latest
+  storage: 5Gi
+  models:
+    - nomic-embed-text
+    - llama3
+  gpu:
+    enabled: true
+    count: 1
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "3Gi"
+      cpu: "3"
+
+backend:
+  image: supreme-court-backend
+  tag: latest
+  replicas: 1
+  corsOrigins: "http://localhost:3000,http://localhost:8081"
+  apiKey: ""
+  rateLimitDefault: "60/minute"
+  rateLimitSearch: "20/minute"
+
+web:
+  image: supreme-court-web
+  tag: latest
+  replicas: 1
+
+ingress:
+  enabled: true
+  className: nginx
+  host: ""

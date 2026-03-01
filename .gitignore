@@ -70,3 +70,6 @@ Thumbs.db
 *.log
 *.bak
 *.tmp
+
+# Downloaded binaries
+minikube-linux-amd64

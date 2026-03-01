@@ -1,0 +1,8 @@
+backend/
+mobile/
+.git
+.cursor
+**/node_modules
+**/.next
+**/__pycache__
+**/.venv

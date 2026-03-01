@@ -1,0 +1,6 @@
+apiVersion: v2
+name: supreme-court-explorer
+description: AI-powered semantic search across Indian Supreme Court landmark cases
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
